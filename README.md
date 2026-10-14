@@ -8,7 +8,7 @@ Geoportal oficial da **Prefeitura Municipal de Jaguariúna** com o zoneamento de
 
 - **Zonas de uso** (ZR, ZPR, ZC, ZPPH, ZI e ZEIS), com as cores do mapa oficial e a área de cada uma.
 - **Demais áreas do município:** área urbana sem zona definida no Anexo III, expansão urbana, área rural e áreas sem classificação.
-- **AIA** (Área de Interesse Ambiental): **prevalece sobre qualquer zona ou classificação**. Em AIA não são admitidas intervenções, e a consulta cita a classe que existiria por baixo.
+- **AIA** (Área de Interesse Ambiental): **prevalece sobre qualquer zona ou classificação**. A consulta destaca que se trata de AIA e cita a classe que existiria por baixo.
 - **Base territorial:** limite municipal (IBGE), corredores de comércio e serviços (CCS), ferrovia e hidrografia.
 - **Consulta de um local:** clique no mapa, digite um endereço ou latitude e longitude para saber a zona, o perímetro, se está em AIA e o nível de confiança da resposta.
 - **Parâmetros urbanísticos:** para cada zona consultada, a tabela do Anexo I (lote mínimo, frente, recuos, taxa de ocupação, coeficiente de aproveitamento, gabarito, vagas e área permeável) por categoria de uso, mais a tabela dos corredores CCS. É uma transcrição das tabelas 01 a 07; confira no texto da lei.

@@ -372,7 +372,7 @@ function resultHTML(r, compacto){
   let h = compacto ? `<div class="pz">${titulo}</div>` : `<div class="res-card"><div class="zone">${titulo}${sub?`<small>${sub}</small>`:''}</div>`;
   if(compacto && sub) h += `<div>${sub}</div>`;
   if(eAia){
-    h += `<div class="res-warn" style="background:#e9f5ee;border-color:#b7dcc4;color:#1b4d2e">🌿 <b>Prevalece a AIA.</b> Em Área de Interesse Ambiental não são admitidas intervenções.${p.subjacente?` Esta área também consta como <b>${p.subjacente}</b>, mas a AIA se sobrepõe.`:''} Imóveis com AIA, no todo ou em parte, exigem Estudo de Impacto Ambiental (art. 215 da LC 409/2024).</div>`;
+    h += `<div class="res-warn" style="background:#e9f5ee;border-color:#b7dcc4;color:#1b4d2e">🌿 <b>Prevalece a AIA.</b>${p.subjacente?` Esta área também consta como <b>${p.subjacente}</b>, mas a AIA se sobrepõe.`:''} Imóveis com AIA, no todo ou em parte, exigem Estudo de Impacto Ambiental (art. 215 da LC 409/2024).</div>`;
   }
   if(p.conflito) h += `<div class="res-warn">${p.conflito}.</div>`;
   const motivo = r.rebaixada ? `reduzida: ${r.aviso}` : p.confianca_motivo;
