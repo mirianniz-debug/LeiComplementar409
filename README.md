@@ -1,4 +1,4 @@
-﻿# Geoportal de Zoneamento — Jaguariúna (Lei Complementar nº 409/2024)
+# Geoportal de Zoneamento — Jaguariúna (Lei Complementar nº 409/2024)
 
 Geoportal oficial da **Prefeitura Municipal de Jaguariúna** com o zoneamento de uso e ocupação do solo da **Lei Complementar nº 409/2024 (Anexo III)**, a expansão urbana e a área rural do município.
 
@@ -6,7 +6,7 @@ Geoportal oficial da **Prefeitura Municipal de Jaguariúna** com o zoneamento de
 
 ## O que o geoportal mostra
 
-- **Zonas de uso** (ZR, ZPR, ZC, ZPPH, ZI, ZEIS e ZTL), com as cores do mapa oficial e a área de cada uma.
+- **Zonas de uso** (ZR, ZPR, ZC, ZPPH, ZI e ZEIS), com as cores do mapa oficial e a área de cada uma.
 - **Demais áreas do município:** área urbana sem zona definida no Anexo III, expansão urbana, área rural e áreas sem classificação.
 - **AIA** (Área de Interesse Ambiental) como sobreposição.
 - **Base territorial:** limite municipal (IBGE), corredores de comércio e serviços (CCS), ferrovia e hidrografia.
@@ -17,11 +17,13 @@ Geoportal oficial da **Prefeitura Municipal de Jaguariúna** com o zoneamento de
 
 | Nível | Significado |
 |---|---|
-| **Alta** | Zona definida no Anexo III, em polígono (erro estimado de até ~30 m). |
-| **Média** | Limite aproximado (reconstruído de hachurado do desenho), área rural/expansão do geoportal, ou ponto a até 30 m de uma divisa. |
-| **Baixa** | Sem zona definida no Anexo III ou fora das camadas disponíveis. |
+| **Alta** | Zona do Anexo III (LC 409/2024) ou classificação rural / expansão urbana da LC 373/2022 (Plano Diretor). |
+| **Média** | Ponto a até 30 m de uma divisa entre polígonos (zonas, AIA ou outras classificações). |
+| **Baixa** | Área urbana sem zona definida no Anexo III, ou fora das camadas disponíveis. |
 
 ## Aviso
+
+Onde o Anexo III e a LC 373/2022 (Plano Diretor) divergem, o geoportal mostra a classificação da **LC 373/2022**, que prevalece em caso de conflito (art. 217, parágrafo único, da LC 409/2024).
 
 Consulta **informativa**. O desenho do Anexo III não é georreferenciado pela Prefeitura; o mapa foi ajustado a uma base real (OpenStreetMap, limite do IBGE e hidrografia) com erro estimado de até 30 m. Perto de divisas, confirme com a Secretaria de Planejamento Urbano. Esta consulta **não substitui** a certidão de uso e ocupação do solo.
 
@@ -29,7 +31,7 @@ Consulta **informativa**. O desenho do Anexo III não é georreferenciado pela P
 
 - Lei Complementar nº 409/2024, Anexo III — Zoneamento de Uso e Ocupação do Solo (Prefeitura de Jaguariúna).
 - IBGE — limite municipal.
-- Geoportal Uso do Solo em Jaguariúna — áreas de expansão urbana e rural.
+- Lei Complementar nº 373/2022 (Plano Diretor de Jaguariúna) — classificação das áreas urbana, de expansão urbana e rural.
 - Mapa base: © colaboradores do OpenStreetMap; Esri; OpenTopoMap.
 
 ## Estrutura
