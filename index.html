@@ -176,7 +176,7 @@
     <div class="section-tick"><span>Demais áreas do município</span></div>
     <div id="layers-areas"></div>
 
-    <div class="section-tick"><span>Sobreposição</span></div>
+    <div class="section-tick"><span>Prevalece sobre as demais</span></div>
     <div id="layers-aia"></div>
 
     <div class="section-tick"><span>Base territorial</span></div>
@@ -184,13 +184,13 @@
 
     <div class="section-tick"><span>Como ler a confiança</span></div>
     <div class="conf-legend">
-      <div><span class="badge alta">alta</span> Zona do Anexo III (LC 409/2024) ou classificação rural / expansão urbana da LC 373/2022 (Plano Diretor).</div>
+      <div><span class="badge alta">alta</span> Zona ou AIA do Anexo III (LC 409/2024), ou classificação rural / expansão urbana da LC 373/2022 (Plano Diretor).</div>
       <div><span class="badge média">média</span> Ponto a até 30 m de uma divisa entre polígonos (zonas, AIA ou outras classificações): confirme com a Prefeitura.</div>
       <div><span class="badge baixa">baixa</span> Área urbana sem zona definida no Anexo III, ou fora das camadas disponíveis.</div>
     </div>
 
     <div class="disclaimer">
-      <b>Aviso:</b> consulta informativa. Onde o Anexo III e a LC 373/2022 (Plano Diretor) divergem, o geoportal mostra a classificação da LC 373/2022, que prevalece em caso de conflito (art. 217 da LC 409/2024). O desenho do Anexo III não é georreferenciado pela Prefeitura; o mapa foi ajustado à base real com erro estimado de até 30 m. Perto de divisas, confirme com a Secretaria de Planejamento. Esta consulta não substitui a certidão de uso e ocupação do solo.
+      <b>Aviso:</b> consulta informativa. Em Área de Interesse Ambiental (AIA) prevalece a AIA sobre qualquer zona ou classificação. Onde o Anexo III e a LC 373/2022 (Plano Diretor) divergem, o geoportal mostra a classificação da LC 373/2022, que prevalece em caso de conflito (art. 217 da LC 409/2024). O desenho do Anexo III não é georreferenciado pela Prefeitura; o mapa foi ajustado à base real com erro estimado de até 30 m. Perto de divisas, confirme com a Secretaria de Planejamento. Esta consulta não substitui a certidão de uso e ocupação do solo.
     </div>
     <button id="fitBtn" class="btn ghost">⤢ Ajustar ao município</button>
   </aside>
@@ -361,21 +361,25 @@ function consultar(lat, lon){
 function resultHTML(r, compacto){
   if(!r.dentro) return `<div class="res-off">Este ponto está <b>fora do limite municipal</b> de Jaguariúna (IBGE).</div>`;
   const p = r.p; let titulo, sub='';
-  if(p.tipo==='Zona do Anexo III'){ titulo = `${p.sigla} — ${p.nome}`; sub = p.perimetro ? `Perímetro ${p.perimetro}` : ''; }
+  const eAia = p.tipo==='AIA';
+  if(eAia){
+    titulo = 'AIA — Área de Interesse Ambiental';
+    const ids = (p.perimetro||'').split(',').map(s=>s.trim()).filter(Boolean);
+    sub = ids.length ? 'Perímetro '+ids.slice(0,3).join(', ')+(ids.length>3?` e outros ${ids.length-3}`:'') : '';
+  }
+  else if(p.tipo==='Zona do Anexo III'){ titulo = `${p.sigla} — ${p.nome}`; sub = p.perimetro ? `Perímetro ${p.perimetro}` : ''; }
   else { titulo = p.nome; }
   let h = compacto ? `<div class="pz">${titulo}</div>` : `<div class="res-card"><div class="zone">${titulo}${sub?`<small>${sub}</small>`:''}</div>`;
   if(compacto && sub) h += `<div>${sub}</div>`;
-  if(p.aia==='Sim'){
-    const ids = (p.aia_perimetro||'').split(',').map(s=>s.trim()).filter(Boolean);
-    const t = ids.length ? ' — '+ids.slice(0,3).join(', ')+(ids.length>3?` e outras ${ids.length-3}`:'') : '';
-    h += `<div class="res-line">🌿 <b>Dentro de Área de Interesse Ambiental (AIA)</b>${t}</div>`;
+  if(eAia){
+    h += `<div class="res-warn" style="background:#e9f5ee;border-color:#b7dcc4;color:#1b4d2e">🌿 <b>Prevalece a AIA.</b> Em Área de Interesse Ambiental não são admitidas intervenções.${p.subjacente?` Esta área também consta como <b>${p.subjacente}</b>, mas a AIA se sobrepõe.`:''} Imóveis com AIA, no todo ou em parte, exigem Estudo de Impacto Ambiental (art. 215 da LC 409/2024).</div>`;
   }
   if(p.conflito) h += `<div class="res-warn">${p.conflito}.</div>`;
   const motivo = r.rebaixada ? `reduzida: ${r.aviso}` : p.confianca_motivo;
   h += `<div class="res-line"><b>Confiança:</b> <span class="badge ${r.conf}">${r.conf}</span><br><span style="color:var(--ink-soft)">${motivo}</span></div>`;
   if(r.aviso && !r.rebaixada) h += `<div class="res-warn">${r.aviso}</div>`;
   h += `<div class="res-line" style="color:var(--ink-soft)"><b>Fonte:</b> ${p.origem}</div>`;
-  if(!compacto){ h += paramsHTML(p); h += `</div>`; }
+  if(!compacto){ if(!eAia) h += paramsHTML(p); h += `</div>`; }
   return h;
 }
 function mostrar(lat, lon, abrirPopup){
@@ -474,8 +478,8 @@ function init(D){
   });
 
   // AIA (sobreposição)
-  const aiaFeats = CONS.filter(f=>f.properties.aia==='Sim'); const aiaKm2 = sumKm2(aiaFeats);
-  renderRow(document.getElementById('layers-aia'), {key:'aia', name:'AIA — Área de Interesse Ambiental', color:'#2e8b57', borda:'#1b6b3a', fill:'#2e8b5733',
+  const aiaFeats = CONS.filter(f=>f.properties.tipo==='AIA'); const aiaKm2 = sumKm2(aiaFeats);
+  renderRow(document.getElementById('layers-aia'), {key:'aia', name:'AIA — Área de Interesse Ambiental (prevalece sobre as zonas)', color:'#2e8b57', borda:'#1b6b3a', fill:'#2e8b5733',
     hatch:'repeating-linear-gradient(0deg,#1b6b3a 0 1px,transparent 1px 5px),repeating-linear-gradient(90deg,#1b6b3a 0 1px,transparent 1px 5px)', on:true, km2:aiaKm2, pct:pct(aiaKm2),
     layer: poly(aiaFeats, {color:'#1b6b3a', weight:0.5, fillColor:'url(#pat-aia)', fillOpacity:1}, rAia, 'pAia'), after:()=>ensurePattern(rAia,'pat-aia',PAT_AIA)});
 
