@@ -1,0 +1,450 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Geoportal de Zoneamento — Jaguariúna</title>
+<meta name="description" content="Geoportal de Zoneamento, Uso e Ocupação do Solo de Jaguariúna (LC 409/2024, Anexo III): zonas, expansão urbana, área rural e consulta por ponto.">
+<link rel="icon" type="image/png" href="images/brasao.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* identidade da Prefeitura de Jaguariúna (site oficial) */
+    --navy:#000032;
+    --navy-2:#14144f;
+    --accent:#d14831;
+    --paper:#f1f2f7;
+    --panel:#ffffff;
+    --ink:#12123a;
+    --ink-soft:#4b4e6b;
+    --line:#dfe1ec;
+    --line-strong:#c9ccdc;
+    --hover:#eceefa;
+    --alta:#2f7d4f; --media:#b9791a; --baixa:#d14831;
+    --radius:10px;
+    --font-display:'Montserrat','Segoe UI',system-ui,sans-serif;
+    --font-body:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;
+    font-family:var(--font-body);
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;padding:0;background:var(--paper);color:var(--ink);}
+  body{display:flex;flex-direction:column;overflow:hidden;}
+
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;background:var(--navy);color:#fff;position:relative;z-index:1000;}
+  header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:linear-gradient(90deg,var(--accent) 0 28%,#fff 28% 30%,var(--navy-2) 30% 100%);}
+  header .crest{width:46px;height:46px;flex:0 0 auto;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;padding:4px;box-shadow:0 1px 5px rgba(0,0,0,.35);}
+  header .crest img{width:100%;height:100%;object-fit:contain;display:block;}
+  header .titles{display:flex;flex-direction:column;line-height:1.15;min-width:0;}
+  header .org{font:600 10px/1 var(--font-display);letter-spacing:.14em;text-transform:uppercase;color:#aab0e0;margin-bottom:4px;}
+  header h1{font:700 17px/1.2 var(--font-display);margin:0;color:#fff;}
+  header .sub{margin:3px 0 0;font:500 11px/1.2 var(--font-body);color:#c8ccee;}
+  header .spacer{flex:1;}
+  header .stats{display:flex;gap:24px;margin-right:6px;}
+  header .stat{text-align:right;}
+  header .stat .n{font:700 16px var(--font-display);color:#fff;}
+  header .stat .l{font:500 9.5px var(--font-body);color:#aab0e0;text-transform:uppercase;letter-spacing:.07em;margin-top:2px;}
+  #toggleSidebar{display:none;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:8px;padding:7px 11px;font:600 12.5px var(--font-body);cursor:pointer;}
+
+  #appwrap{flex:1;display:flex;min-height:0;position:relative;}
+  #sidebar{width:344px;flex:0 0 auto;background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;padding:16px 16px 90px;z-index:900;}
+  .section-tick{display:flex;align-items:center;gap:8px;margin:22px 0 9px;}
+  .section-tick:first-child{margin-top:0;}
+  .section-tick span{font:700 10.5px/1 var(--font-display);text-transform:uppercase;letter-spacing:.11em;color:var(--navy);white-space:nowrap;}
+  .section-tick::after{content:"";flex:1;height:1px;background:var(--line-strong);}
+  .hint{font:400 11.5px/1.45 var(--font-body);color:var(--ink-soft);margin:0 0 8px;}
+
+  .searchbox{display:flex;gap:6px;}
+  .searchbox input{flex:1;min-width:0;padding:9px 10px;border:1px solid var(--line-strong);border-radius:8px;font:500 13px var(--font-body);color:var(--ink);background:#fff;}
+  .searchbox input:focus{outline:2px solid var(--accent);outline-offset:-1px;}
+  .btn{padding:9px 13px;border:0;border-radius:8px;background:var(--navy);color:#fff;font:600 12.5px var(--font-body);cursor:pointer;}
+  .btn:hover{background:var(--navy-2);}
+  .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line-strong);}
+  .btn.ghost:hover{background:var(--hover);}
+  #result{margin-top:10px;}
+  .res-card{border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:var(--radius);padding:11px 12px;background:#fff;}
+  .res-card .zone{font:700 15px/1.25 var(--font-display);color:var(--navy);margin:0 0 2px;}
+  .res-card .zone small{display:block;font:500 11.5px var(--font-body);color:var(--ink-soft);margin-top:3px;}
+  .res-line{font:400 12px/1.45 var(--font-body);color:var(--ink);margin:7px 0 0;}
+  .res-line b{font-weight:600;}
+  .badge{display:inline-block;padding:2px 9px;border-radius:99px;font:700 10.5px var(--font-display);letter-spacing:.05em;text-transform:uppercase;color:#fff;}
+  .badge.alta{background:var(--alta);} .badge.média{background:var(--media);} .badge.baixa{background:var(--baixa);}
+  .res-warn{margin-top:8px;padding:7px 9px;border-radius:7px;background:#fff6e5;border:1px solid #f0d9a8;font:500 11.5px/1.4 var(--font-body);color:#6b4a0c;}
+  .res-off{margin-top:8px;padding:9px;border-radius:7px;background:var(--hover);font:500 12px/1.4 var(--font-body);color:var(--ink-soft);}
+
+  .basemap-row{display:flex;gap:6px;}
+  .basemap-btn{flex:1;padding:7px 4px;font:600 11.5px var(--font-body);text-align:center;border:1px solid var(--line-strong);border-radius:8px;background:#fff;cursor:pointer;color:var(--ink);}
+  .basemap-btn.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+
+  .layer-row{display:flex;align-items:flex-start;gap:10px;padding:7px 8px;border-radius:8px;cursor:pointer;user-select:none;}
+  .layer-row:hover{background:var(--hover);}
+  .layer-row input[type=checkbox]{appearance:none;-webkit-appearance:none;width:17px;height:17px;margin-top:2px;flex:0 0 auto;border:1.6px solid #aeb2c6;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;background:#fff;}
+  .layer-row input[type=checkbox]:checked{background:var(--layer-color,var(--navy));border-color:var(--layer-color,var(--navy));}
+  .layer-row input[type=checkbox]:checked::after{content:"";width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px);}
+  .swatch{width:26px;height:16px;flex:0 0 auto;margin-top:1px;border-radius:3px;border:1.5px solid var(--stroke,#555);background:var(--fill,transparent);position:relative;overflow:hidden;}
+  .swatch.dashed{border-style:dashed;}
+  .swatch.line{height:0;border:0;border-top:3px solid var(--stroke);margin-top:8px;background:none;}
+  .swatch.hatch{background-image:var(--hatch);}
+  .layer-meta{flex:1;min-width:0;}
+  .layer-meta .name{font:500 12.5px/1.3 var(--font-body);color:var(--ink);}
+  .area-stat{margin-top:3px;}
+  .area-row{display:flex;justify-content:space-between;font:500 10.5px var(--font-body);color:var(--ink-soft);}
+  .area-bar{height:3px;background:var(--line);border-radius:3px;margin-top:3px;overflow:hidden;}
+  .area-bar-fill{height:100%;background:var(--layer-color,var(--navy));}
+
+  .conf-legend{display:grid;gap:6px;margin-top:4px;}
+  .conf-legend div{font:400 11.5px/1.4 var(--font-body);color:var(--ink-soft);}
+  .disclaimer{margin-top:18px;padding:10px 11px;border-radius:8px;background:var(--hover);font:400 11px/1.5 var(--font-body);color:var(--ink-soft);}
+  #fitBtn{width:100%;margin-top:16px;}
+
+  #map{flex:1;position:relative;background:#dfe3ea;cursor:crosshair;}
+  .leaflet-container{font-family:var(--font-body);}
+  #northArrow{position:absolute;top:12px;right:12px;z-index:500;background:#fff;border-radius:9px;padding:5px 7px 3px;box-shadow:0 1px 6px rgba(0,0,0,.2);}
+  #mapCredit{position:absolute;bottom:34px;left:10px;z-index:500;background:rgba(255,255,255,.92);border-radius:8px;padding:6px 10px;font:500 10.5px/1.4 var(--font-body);color:var(--ink-soft);box-shadow:0 1px 5px rgba(0,0,0,.18);max-width:360px;}
+  #mapCredit b{color:var(--navy);font-weight:600;}
+  #statusbar{position:absolute;left:0;right:0;bottom:0;z-index:500;display:flex;gap:12px;align-items:center;padding:5px 12px;background:rgba(0,0,50,.88);color:#dfe2ff;font:500 11px var(--font-body);}
+  #statusbar .lbl{color:#9aa0d8;margin-right:5px;font-weight:600;letter-spacing:.06em;}
+  #statusbar .sep{width:1px;height:12px;background:rgba(255,255,255,.25);}
+  #loading{position:absolute;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;background:rgba(241,242,247,.92);font:600 14px var(--font-display);color:var(--navy);text-align:center;padding:20px;}
+  .pin{width:18px;height:18px;border-radius:50%;background:var(--accent);border:3px solid #fff;box-shadow:0 0 0 3px rgba(209,72,49,.35),0 1px 6px rgba(0,0,0,.5);}
+  .leaflet-popup-content{margin:11px 13px;font:400 12px/1.45 var(--font-body);min-width:210px;}
+  .leaflet-popup-content .pz{font:700 13.5px/1.25 var(--font-display);color:var(--navy);margin:0 0 4px;}
+
+  @media (max-width: 860px){
+    header .stats{display:none;}
+    #toggleSidebar{display:inline-block;}
+    #sidebar{position:absolute;top:0;bottom:0;left:0;width:min(340px,92vw);transform:translateX(-100%);transition:transform .22s ease;box-shadow:4px 0 18px rgba(0,0,0,.25);}
+    #sidebar.open{transform:translateX(0);}
+    #mapCredit{display:none;}
+    header h1{font-size:14.5px;}
+    header .sub{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="crest"><img src="images/brasao.png" alt="Brasão do município de Jaguariúna"></div>
+  <div class="titles">
+    <span class="org">Prefeitura Municipal de Jaguariúna</span>
+    <h1>Geoportal de Zoneamento</h1>
+    <p class="sub">Uso e ocupação do solo · LC nº 409/2024 · Anexo III</p>
+  </div>
+  <div class="spacer"></div>
+  <div class="stats">
+    <div class="stat"><div class="n" id="statMun">—</div><div class="l">km² de município</div></div>
+    <div class="stat"><div class="n" id="statZonas">—</div><div class="l">km² em zonas de uso</div></div>
+  </div>
+  <button id="toggleSidebar" aria-label="Abrir ou fechar o painel de camadas">☰ Camadas</button>
+</header>
+
+<div id="appwrap">
+  <aside id="sidebar">
+    <div class="section-tick"><span>Consultar um local</span></div>
+    <p class="hint">Clique no mapa, digite um endereço ou coordenadas (ex.: <i>-22.7036, -46.9857</i>).</p>
+    <form class="searchbox" id="searchForm">
+      <input id="q" type="text" placeholder="Endereço ou latitude, longitude" autocomplete="off" aria-label="Endereço ou coordenadas">
+      <button class="btn" type="submit">Buscar</button>
+    </form>
+    <div id="result"></div>
+
+    <div class="section-tick"><span>Mapa base</span></div>
+    <div class="basemap-row">
+      <div class="basemap-btn active" data-base="street">Ruas</div>
+      <div class="basemap-btn" data-base="satellite">Satélite</div>
+      <div class="basemap-btn" data-base="terrain">Relevo</div>
+    </div>
+
+    <div class="section-tick"><span>Zonas de uso (Anexo III)</span></div>
+    <div id="layers-zonas"></div>
+
+    <div class="section-tick"><span>Demais áreas do município</span></div>
+    <div id="layers-areas"></div>
+
+    <div class="section-tick"><span>Sobreposição</span></div>
+    <div id="layers-aia"></div>
+
+    <div class="section-tick"><span>Base territorial</span></div>
+    <div id="layers-base"></div>
+
+    <div class="section-tick"><span>Como ler a confiança</span></div>
+    <div class="conf-legend">
+      <div><span class="badge alta">alta</span> Zona definida no Anexo III, em polígono (erro estimado até ~30 m).</div>
+      <div><span class="badge média">média</span> Limite aproximado (reconstruído de hachurado), área rural/expansão do geoportal, ou ponto próximo de divisa.</div>
+      <div><span class="badge baixa">baixa</span> Sem zona definida no Anexo III ou fora das camadas disponíveis.</div>
+    </div>
+
+    <div class="disclaimer">
+      <b>Aviso:</b> consulta informativa. O desenho do Anexo III não é georreferenciado pela Prefeitura; o mapa foi ajustado à base real com erro estimado de até 30 m. Perto de divisas, confirme com a Secretaria de Planejamento. Esta consulta não substitui a certidão de uso e ocupação do solo.
+    </div>
+    <button id="fitBtn" class="btn ghost">⤢ Ajustar ao município</button>
+  </aside>
+
+  <div id="map">
+    <div id="loading">Carregando camadas do geoportal…</div>
+    <div id="northArrow">
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-label="Norte"><path d="M12 3 L16 15 L12 12 L8 15 Z" fill="#000032"/><text x="12" y="23" font-size="7" text-anchor="middle" fill="#000032" font-family="Montserrat, sans-serif" font-weight="700">N</text></svg>
+    </div>
+    <div id="mapCredit"><b>Elaboração cartográfica:</b> Engª Mirian Niz<br>Fontes: LC 409/2024 (Anexo III), IBGE e Geoportal Uso do Solo</div>
+    <div id="statusbar">
+      <span><span class="lbl">LAT</span><span id="roLat">—</span></span><span class="sep"></span>
+      <span><span class="lbl">LON</span><span id="roLon">—</span></span><span class="sep"></span>
+      <span><span class="lbl">ZOOM</span><span id="roZoom">—</span></span>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+/* =========================================================
+   CONFIGURAÇÃO — cores iguais às do mapa oficial (Anexo III)
+   ========================================================= */
+const ZONAS = [
+  {k:'ZR',   nome:'ZR — Zona Residencial',                          cor:'#ffff00', borda:'#8f8f00'},
+  {k:'ZPR',  nome:'ZPR — Zona Predominantemente Residencial',       cor:'#ff7f00', borda:'#a35100'},
+  {k:'ZC',   nome:'ZC — Zona Comercial',                            cor:'#a50000', borda:'#5c0000'},
+  {k:'ZPPH', nome:'ZPPH — Zona de Proteção ao Patrimônio Histórico',cor:'#00ffff', borda:'#00868a'},
+  {k:'ZI',   nome:'ZI — Zona Industrial',                           cor:'#ff00ff', borda:'#8c008c'},
+  {k:'ZEIS', nome:'ZEIS — Zona Especial de Interesse Social',       cor:'#6706ac', borda:'#3b0463'},
+  {k:'ZTL',  nome:'ZTL — Zona de Turismo e Lazer',                  cor:'#0000ff', borda:'#00008a'}
+];
+const FILES = {
+  consulta:'data/consulta.json', limite:'data/limite.json', ccs:'data/ccs.json',
+  hidro:'data/hidrografia.json', ferrovia:'data/ferrovia.json', faixa:'data/faixa_incerteza.json'
+};
+const LIMIAR_DIVISA_M = 30;
+
+/* =========================================================
+   MAPA
+   ========================================================= */
+const map = L.map('map', {zoomControl:false, minZoom:8, maxZoom:19, zoomSnap:0.25, zoomDelta:0.5});
+L.control.zoom({position:'bottomright'}).addTo(map);
+const basemaps = {
+  street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap contributors',maxZoom:19}),
+  satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'Tiles &copy; Esri, Maxar, Earthstar Geographics',maxZoom:19}),
+  terrain: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{attribution:'Map data: &copy; OpenStreetMap contributors, SRTM | &copy; OpenTopoMap',maxZoom:17})
+};
+basemaps.street.addTo(map);
+document.querySelectorAll('.basemap-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.basemap-btn').forEach(b=>{b.classList.remove('active');map.removeLayer(basemaps[b.dataset.base]);});
+    btn.classList.add('active'); basemaps[btn.dataset.base].addTo(map);
+  });
+});
+map.createPane('pZonas').style.zIndex = 410;
+map.createPane('pAia').style.zIndex = 420;
+map.createPane('pLinhas').style.zIndex = 430;
+map.createPane('pConsulta').style.zIndex = 650;
+const rZonas = L.svg({pane:'pZonas'}), rAia = L.svg({pane:'pAia'}), rLinhas = L.svg({pane:'pLinhas'});
+
+map.on('mousemove', e=>{
+  document.getElementById('roLat').textContent = e.latlng.lat.toFixed(5);
+  document.getElementById('roLon').textContent = e.latlng.lng.toFixed(5);
+});
+function updZoom(){ document.getElementById('roZoom').textContent = map.getZoom(); }
+map.on('zoomend', updZoom); updZoom();
+
+/* ---------- hachuras (SVG) para AIA e expansão ---------- */
+function ensurePattern(renderer, id, svgInner){
+  const svg = renderer && renderer._container; if(!svg || svg.querySelector('#'+id)) return;
+  const ns='http://www.w3.org/2000/svg';
+  let defs = svg.querySelector('defs'); if(!defs){ defs = document.createElementNS(ns,'defs'); svg.insertBefore(defs, svg.firstChild); }
+  const tpl = document.createElementNS(ns,'svg'); tpl.innerHTML = svgInner;
+  defs.appendChild(tpl.firstElementChild);
+}
+const PAT_AIA = '<pattern id="pat-aia" width="9" height="9" patternUnits="userSpaceOnUse"><rect width="9" height="9" fill="#2e8b57" fill-opacity=".16"/><path d="M0 4.5H9M4.5 0V9" stroke="#1b6b3a" stroke-width="1.1"/></pattern>';
+const PAT_EXP = '<pattern id="pat-exp" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="#f2f2f2" fill-opacity=".45"/><path d="M0 0V8" stroke="#6b6b6b" stroke-width="1.5"/></pattern>';
+
+/* =========================================================
+   GEOMETRIA — área e distâncias (aproximação equirretangular)
+   ========================================================= */
+function ringAreaM2(ring){
+  const lat0 = ring.reduce((s,p)=>s+p[1],0)/ring.length;
+  const mLat = 110740, mLon = 111412.84*Math.cos(lat0*Math.PI/180) - 93.5*Math.cos(3*lat0*Math.PI/180); let A = 0;
+  for(let i=0;i<ring.length-1;i++){ const [x0,y0]=ring[i],[x1,y1]=ring[i+1]; A += (x0*mLon)*(y1*mLat)-(x1*mLon)*(y0*mLat); }
+  return Math.abs(A)/2;
+}
+function polysOf(f){ const g=f.geometry; return g.type==='MultiPolygon'?g.coordinates:[g.coordinates]; }
+function featAreaM2(f){ let t=0; polysOf(f).forEach(p=>p.forEach((r,i)=>{ if(r.length>=4) t += (i===0?1:-1)*ringAreaM2(r); })); return t; }
+function sumKm2(feats){ return feats.reduce((s,f)=>s+featAreaM2(f),0)/1e6; }
+function pointInRing(x,y,ring){ let ins=false; for(let i=0,j=ring.length-1;i<ring.length;j=i++){ const xi=ring[i][0],yi=ring[i][1],xj=ring[j][0],yj=ring[j][1]; if(((yi>y)!==(yj>y)) && (x < (xj-xi)*(y-yi)/(yj-yi)+xi)) ins=!ins; } return ins; }
+function inPoly(x,y,poly){ if(!pointInRing(x,y,poly[0])) return false; for(let h=1;h<poly.length;h++) if(pointInRing(x,y,poly[h])) return false; return true; }
+function bboxOf(f){ let a=1e9,b=1e9,c=-1e9,d=-1e9; polysOf(f).forEach(p=>p[0].forEach(([x,y])=>{ if(x<a)a=x; if(x>c)c=x; if(y<b)b=y; if(y>d)d=y; })); return [a,b,c,d]; }
+function distBoundaryM(f,x,y){
+  const mLat=110740, mLon=111412.84*Math.cos(y*Math.PI/180) - 93.5*Math.cos(3*y*Math.PI/180); let best=1e12;
+  polysOf(f).forEach(p=>p.forEach(r=>{ for(let i=0;i<r.length-1;i++){
+    const ax=(r[i][0]-x)*mLon, ay=(r[i][1]-y)*mLat, bx=(r[i+1][0]-x)*mLon, by=(r[i+1][1]-y)*mLat;
+    const dx=bx-ax, dy=by-ay, l2=dx*dx+dy*dy; let t = l2? -(ax*dx+ay*dy)/l2 : 0; t=Math.max(0,Math.min(1,t));
+    const px=ax+t*dx, py=ay+t*dy, d=Math.hypot(px,py); if(d<best) best=d; } }));
+  return best;
+}
+const fmt1 = n => n.toLocaleString('pt-BR',{maximumFractionDigits:1, minimumFractionDigits:1});
+
+/* =========================================================
+   CONSULTA DE UM PONTO
+   ========================================================= */
+let CONS = [];            // feições da camada de consulta (com bbox)
+let pinLayer = null;
+function consultar(lat, lon){
+  const hit = CONS.find(f => lon>=f._bb[0] && lon<=f._bb[2] && lat>=f._bb[1] && lat<=f._bb[3] && polysOf(f).some(p=>inPoly(lon,lat,p)));
+  if(!hit) return {dentro:false, lat, lon};
+  const p = hit.properties, dist = distBoundaryM(hit, lon, lat);
+  let conf = p.confianca, aviso = null;
+  if(dist <= LIMIAR_DIVISA_M){ aviso = `ponto a ${Math.round(dist)} m de uma divisa de zona, AIA ou conflito de fontes (≤ ${LIMIAR_DIVISA_M} m)`; if(conf==='alta') conf='média'; }
+  return {dentro:true, lat, lon, p, dist, conf, rebaixada:(aviso && conf!==p.confianca), aviso};
+}
+function resultHTML(r, compacto){
+  if(!r.dentro) return `<div class="res-off">Este ponto está <b>fora do limite municipal</b> de Jaguariúna (IBGE).</div>`;
+  const p = r.p; let titulo, sub='';
+  if(p.tipo==='Zona do Anexo III'){ titulo = `${p.sigla} — ${p.nome}`; sub = p.perimetro ? `Perímetro ${p.perimetro}` : ''; }
+  else { titulo = p.nome; }
+  let h = compacto ? `<div class="pz">${titulo}</div>` : `<div class="res-card"><div class="zone">${titulo}${sub?`<small>${sub}</small>`:''}</div>`;
+  if(compacto && sub) h += `<div>${sub}</div>`;
+  if(p.aia==='Sim'){
+    const ids = (p.aia_perimetro||'').split(',').map(s=>s.trim()).filter(Boolean);
+    const t = ids.length ? ' — '+ids.slice(0,3).join(', ')+(ids.length>3?` e outras ${ids.length-3}`:'') : '';
+    h += `<div class="res-line">🌿 <b>Dentro de Área de Interesse Ambiental (AIA)</b>${t}</div>`;
+  }
+  if(p.conflito) h += `<div class="res-warn">${p.conflito}.</div>`;
+  const motivo = r.rebaixada ? `reduzida: ${r.aviso}` : p.confianca_motivo;
+  h += `<div class="res-line"><b>Confiança:</b> <span class="badge ${r.conf}">${r.conf}</span><br><span style="color:var(--ink-soft)">${motivo}</span></div>`;
+  if(r.aviso && !r.rebaixada) h += `<div class="res-warn">${r.aviso}</div>`;
+  h += `<div class="res-line" style="color:var(--ink-soft)"><b>Fonte:</b> ${p.origem}</div>`;
+  if(!compacto) h += `</div>`;
+  return h;
+}
+function mostrar(lat, lon, abrirPopup){
+  const r = consultar(lat, lon);
+  document.getElementById('result').innerHTML = resultHTML(r,false);
+  if(pinLayer) map.removeLayer(pinLayer);
+  const icon = L.divIcon({className:'', html:'<div class="pin"></div>', iconSize:[18,18], iconAnchor:[9,9]});
+  pinLayer = L.marker([lat,lon],{icon, pane:'pConsulta', keyboard:false}).addTo(map);
+  pinLayer.bindPopup(`<div>${resultHTML(r,true)}</div><div style="margin-top:6px;color:#666;font-size:11px">${lat.toFixed(5)}, ${lon.toFixed(5)}</div>`);
+  if(abrirPopup) pinLayer.openPopup();
+  return r;
+}
+map.on('click', e => { mostrar(e.latlng.lat, e.latlng.lng, true); });
+
+document.getElementById('searchForm').addEventListener('submit', async ev=>{
+  ev.preventDefault();
+  const q = document.getElementById('q').value.trim(); if(!q) return;
+  const m = q.match(/^\s*(-?\d{1,2}[.,]\d+)\s*[;, ]\s*(-?\d{1,3}[.,]\d+)\s*$/);
+  const out = document.getElementById('result');
+  if(m){
+    const lat = parseFloat(m[1].replace(',','.')), lon = parseFloat(m[2].replace(',','.'));
+    map.setView([lat,lon], Math.max(map.getZoom(),15)); mostrar(lat,lon,true); return;
+  }
+  out.innerHTML = '<div class="res-off">Buscando endereço…</div>';
+  try{
+    const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&viewbox=-47.14,-22.56,-46.88,-22.79&q='+encodeURIComponent(q+', Jaguariúna, SP');
+    const res = await (await fetch(url,{headers:{'Accept':'application/json'}})).json();
+    if(!res.length){ out.innerHTML = '<div class="res-off">Endereço não encontrado. Tente incluir o bairro ou use latitude e longitude.</div>'; return; }
+    const lat = parseFloat(res[0].lat), lon = parseFloat(res[0].lon);
+    map.setView([lat,lon], 17); const r = mostrar(lat,lon,true);
+    out.insertAdjacentHTML('afterbegin', `<div class="hint" style="margin-bottom:6px">Local encontrado: ${res[0].display_name}</div>`);
+  }catch(e){ out.innerHTML = '<div class="res-off">Não foi possível buscar o endereço agora. Clique no mapa ou use latitude e longitude.</div>'; }
+});
+
+/* =========================================================
+   CAMADAS
+   ========================================================= */
+const leafletLayers = {};
+function renderRow(container, def){
+  leafletLayers[def.key] = def.layer;
+  const row = document.createElement('label'); row.className='layer-row';
+  row.style.setProperty('--layer-color', def.color);
+  const cb = document.createElement('input'); cb.type='checkbox'; cb.checked=!!def.on;
+  const toggle = ()=>{ if(cb.checked){ def.layer.addTo(map); if(def.after) def.after(); } else map.removeLayer(def.layer); };
+  cb.addEventListener('change', toggle);
+  const sw = document.createElement('span'); sw.className='swatch'+(def.line?' line':'')+(def.dashed?' dashed':'');
+  sw.style.setProperty('--stroke', def.borda||def.color); sw.style.setProperty('--fill', def.fill||def.color);
+  if(def.hatch){ sw.classList.add('hatch'); sw.style.setProperty('--hatch', def.hatch); }
+  const meta = document.createElement('div'); meta.className='layer-meta';
+  let html = `<div class="name">${def.name}</div>`;
+  if(def.km2!==undefined){
+    html += `<div class="area-stat"><div class="area-row"><span>${fmt1(def.km2)} km²</span><span>${def.pct.toFixed(1).replace('.',',')}%</span></div><div class="area-bar"><div class="area-bar-fill" style="width:${Math.min(def.pct,100)}%"></div></div></div>`;
+  }
+  meta.innerHTML = html;
+  row.appendChild(cb); row.appendChild(sw); row.appendChild(meta); container.appendChild(row);
+  if(def.on){ def.layer.addTo(map); if(def.after) def.after(); }
+}
+function poly(feats, style, renderer, pane){
+  return L.geoJSON({type:'FeatureCollection', features:feats}, {style, renderer, pane, interactive:false});
+}
+
+function init(D){
+  document.getElementById('loading').remove();
+  map.setView([-22.70,-46.97], 12);   // o mapa só fica pronto depois de ter uma vista; as hachuras dependem disso
+  CONS = D.consulta.features; CONS.forEach(f=>{ f._bb = bboxOf(f); });
+  const munKm2 = sumKm2(CONS);
+  const pct = km2 => km2/munKm2*100;
+  const byTipo = t => CONS.filter(f=>f.properties.tipo===t);
+  const bySigla = s => CONS.filter(f=>f.properties.tipo==='Zona do Anexo III' && f.properties.sigla===s);
+
+  // zonas de uso
+  const cz = document.getElementById('layers-zonas'); let zonasKm2 = 0;
+  ZONAS.forEach(z=>{
+    const feats = bySigla(z.k); if(!feats.length) return;
+    const km2 = sumKm2(feats); zonasKm2 += km2;
+    renderRow(cz, {key:'z_'+z.k, name:z.nome, color:z.cor, borda:z.borda, fill:z.cor+'bb', on:true, km2, pct:pct(km2),
+      layer: poly(feats, {color:z.borda, weight:0.6, fillColor:z.cor, fillOpacity:0.62}, rZonas, 'pZonas')});
+  });
+
+  // demais áreas
+  const ca = document.getElementById('layers-areas');
+  const defsAreas = [
+    {t:'Área urbana sem zona', nome:'Área urbana sem zona definida no Anexo III', cor:'#9e9ac8', borda:'#5d579b', op:.5, on:true},
+    {t:'Expansão urbana', nome:'Área de expansão urbana', cor:'#7a7a7a', borda:'#555555', pattern:'pat-exp', dashed:true, on:true},
+    {t:'Rural', nome:'Área rural', cor:'#7cc04a', borda:'#4d9221', op:.4, on:true},
+    {t:'Sem classificação', nome:'Sem classificação nas fontes', cor:'#ffffff', borda:'#d14831', op:.15, dashed:true, on:false}
+  ];
+  defsAreas.forEach(d=>{
+    const feats = byTipo(d.t); if(!feats.length) return; const km2 = sumKm2(feats);
+    const st = d.pattern ? {color:d.borda, weight:1, dashArray:'5 4', fillColor:'url(#'+d.pattern+')', fillOpacity:1}
+                         : {color:d.borda, weight:d.dashed?1:0.6, dashArray:d.dashed?'5 4':null, fillColor:d.cor, fillOpacity:d.op};
+    const layer = poly(feats, st, rZonas, 'pZonas');
+    renderRow(ca, {key:'a_'+d.t, name:d.nome, color:d.cor, borda:d.borda, fill:d.cor+'88', dashed:d.dashed, on:d.on, km2, pct:pct(km2), layer,
+      hatch: d.pattern ? 'repeating-linear-gradient(45deg,#6b6b6b 0 1.5px,#f2f2f2 1.5px 5px)' : null,
+      after: d.pattern ? ()=>ensurePattern(rZonas,'pat-exp',PAT_EXP) : null});
+  });
+
+  // AIA (sobreposição)
+  const aiaFeats = CONS.filter(f=>f.properties.aia==='Sim'); const aiaKm2 = sumKm2(aiaFeats);
+  renderRow(document.getElementById('layers-aia'), {key:'aia', name:'AIA — Área de Interesse Ambiental', color:'#2e8b57', borda:'#1b6b3a', fill:'#2e8b5733',
+    hatch:'repeating-linear-gradient(0deg,#1b6b3a 0 1px,transparent 1px 5px),repeating-linear-gradient(90deg,#1b6b3a 0 1px,transparent 1px 5px)', on:true, km2:aiaKm2, pct:pct(aiaKm2),
+    layer: poly(aiaFeats, {color:'#1b6b3a', weight:0.5, fillColor:'url(#pat-aia)', fillOpacity:1}, rAia, 'pAia'), after:()=>ensurePattern(rAia,'pat-aia',PAT_AIA)});
+
+  // base territorial
+  const cb = document.getElementById('layers-base');
+  renderRow(cb, {key:'limite', name:'Limite municipal (IBGE)', color:'#d00000', fill:'transparent', dashed:false, on:true,
+    layer: L.geoJSON(D.limite, {style:{color:'#d00000', weight:2.4, fill:false}, pane:'pLinhas', renderer:rLinhas, interactive:false})});
+  renderRow(cb, {key:'ccs', name:'CCS — Corredor de Comércio e Serviços', color:'#000000', line:true, on:true,
+    layer: L.geoJSON(D.ccs, {style:{color:'#000000', weight:2.2}, pane:'pLinhas', renderer:rLinhas, interactive:false})});
+  renderRow(cb, {key:'ferrovia', name:'Ferrovia', color:'#5b0f0f', line:true, on:false,
+    layer: L.geoJSON(D.ferrovia, {style:{color:'#5b0f0f', weight:2.4}, pane:'pLinhas', renderer:rLinhas, interactive:false})});
+  renderRow(cb, {key:'hidro', name:'Hidrografia', color:'#3a86d6', line:true, on:false,
+    layer: L.geoJSON(D.hidro, {style:{color:'#3a86d6', weight:1}, pane:'pLinhas', renderer:rLinhas, interactive:false})});
+  renderRow(cb, {key:'faixa', name:'Faixa de incerteza (±30 m das divisas)', color:'#d14831', fill:'#d1483166', on:false,
+    layer: L.geoJSON(D.faixa, {style:{stroke:false, fillColor:'#d14831', fillOpacity:0.38}, pane:'pAia', renderer:rAia, interactive:false})});
+
+  document.getElementById('statMun').textContent = fmt1(munKm2);
+  document.getElementById('statZonas').textContent = fmt1(zonasKm2);
+
+  const limiteBounds = L.geoJSON(D.limite).getBounds();
+  const fit = ()=>map.fitBounds(limiteBounds, {padding:[20,20]});
+  document.getElementById('fitBtn').addEventListener('click', ()=>{ fit(); document.getElementById('sidebar').classList.remove('open'); });
+  fit(); map.setMinZoom(Math.max(8, map.getZoom()-2));
+  window.__geoportal = {consultar, mostrar, CONS, map, leafletLayers};
+}
+
+Promise.all(Object.entries(FILES).map(([k,u])=>fetch(u).then(r=>{ if(!r.ok) throw new Error(u+' ('+r.status+')'); return r.json(); }).then(j=>[k,j])))
+  .then(arr=>init(Object.fromEntries(arr)))
+  .catch(err=>{ document.getElementById('loading').innerHTML = 'Não foi possível carregar os dados do geoportal.<br><small style="font-weight:500">Se você abriu o arquivo direto da pasta, use um servidor local ou o endereço publicado. ('+err.message+')</small>'; });
+
+document.getElementById('toggleSidebar').addEventListener('click', ()=>document.getElementById('sidebar').classList.toggle('open'));
+</script>
+</body>
+</html>
+
+
