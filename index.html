@@ -63,8 +63,11 @@
   .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line-strong);}
   .btn.ghost:hover{background:var(--hover);}
   #result{margin-top:10px;}
-  .res-card{border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:var(--radius);padding:11px 12px;background:#fff;}
-  .res-card .zone{font:700 15px/1.25 var(--font-display);color:var(--navy);margin:0 0 2px;}
+  .res-card{position:relative;border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:var(--radius);padding:11px 12px;background:#fff;}
+  .res-card .zone{font:700 15px/1.25 var(--font-display);color:var(--navy);margin:0 0 2px;padding-right:26px;}
+  .res-close{position:absolute;top:5px;right:6px;width:26px;height:26px;border:0;border-radius:6px;background:transparent;color:var(--ink-soft);font:400 22px/1 var(--font-body);cursor:pointer;}
+  .res-close:hover{background:var(--hover);color:var(--navy);}
+  .res-close:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
   .res-card .zone small{display:block;font:500 11.5px var(--font-body);color:var(--ink-soft);margin-top:3px;}
   .res-line{font:400 12px/1.45 var(--font-body);color:var(--ink);margin:7px 0 0;}
   .res-line b{font-weight:600;}
@@ -111,19 +114,6 @@
   .leaflet-popup-content{margin:11px 13px;font:400 12px/1.45 var(--font-body);min-width:210px;}
   .leaflet-popup-content .pz{font:700 13.5px/1.25 var(--font-display);color:var(--navy);margin:0 0 4px;}
 
-  .params{margin-top:10px;border-top:1px dashed var(--line-strong);padding-top:8px;}
-  .params summary{cursor:pointer;font:700 11px/1.3 var(--font-display);letter-spacing:.04em;text-transform:uppercase;color:var(--navy);list-style:none;}
-  .params summary::-webkit-details-marker{display:none;}
-  .params summary::before{content:"▸";display:inline-block;margin-right:6px;transition:transform .15s;}
-  .params[open] summary::before{transform:rotate(90deg);}
-  .ptab{width:100%;border-collapse:collapse;margin-top:7px;font:500 10.5px/1.3 var(--font-body);}
-  .ptab th{font:700 9.5px/1.2 var(--font-body);color:var(--ink-soft);text-align:center;padding:3px 2px;border-bottom:1.5px solid var(--navy);}
-  .ptab td{padding:3px 2px;text-align:center;}
-  .ptab tr.m td{border-top:1px solid var(--line);}
-  .ptab tr.m td:first-child{text-align:left;color:var(--navy);}
-  .ptab tr.s td{text-align:left;color:var(--ink-soft);font:400 9.8px/1.4 var(--font-body);padding:0 2px 5px;}
-  .pnote{margin-top:7px;font:400 10px/1.5 var(--font-body);color:var(--ink-soft);}
-  .pnote b{color:var(--ink);}
 
   @media (max-width: 860px){
     header .stats{display:none;}
@@ -229,57 +219,6 @@ const FILES = {
 const LIMIAR_DIVISA_M = 30;
 
 /* =========================================================
-   PARÂMETROS URBANÍSTICOS — transcrição do Anexo I da LC 409/2024
-   (tabelas 01 a 07; conferir sempre no texto da lei)
-   ========================================================= */
-const VG1='1 por residência', VG2='1 por unid. habitacional', VG3='1 para cada 3 unid. habitacionais', V3='Mínimo de 3 vagas', V4='Mínimo de 4 vagas', UL='1,50 de um lado';
-const R = (c,lote,fr,rf,rl,rfu,to,ca,vg,gb)=>({c,lote,fr,rf,rl,rfu,to,ca,vg,gb});
-const PARAMS = {
-  ZR:   {tabela:'01', nome:'ZR — Zona Residencial', linhas:[
-    R('R1',250,10,4,0,0,'70%','2,00',VG1,9), R('CS1',250,10,4,0,0,'70%','2,00',V3,9)]},
-  ZPR:  {tabela:'02', nome:'ZPR1 — Zona Predominantemente Residencial', linhas:[
-    R('R1',250,10,4,0,0,'75%','2,0',VG1,9), R('R2',250,10,4,0,0,'75%','2,0',VG2,34), R('R3',250,10,4,0,0,'75%','2,0',VG3,34),
-    R('CS1',250,10,4,0,0,'75%','3,0',V3,34), R('CS2',250,10,4,0,0,'75%','3,0',V4,34), R('CS3',500,10,4,0,0,'75%','3,0',V4,34),
-    R('I1',250,10,4,0,0,'75%','3,0',V3,34), R('I2',250,10,4,0,0,'75%','3,0',V4,34), R('I3',500,10,5,0,0,'75%','3,0',V4,34)]},
-  ZC:   {tabela:'03', nome:'ZC — Zona Comercial', linhas:[
-    R('R1',250,10,4,0,0,'80%','2,0',VG1,22), R('R2',250,10,4,0,0,'75%','2,0',VG2,22), R('R3',250,10,4,0,0,'75%','2,0',VG3,22),
-    R('CS1',250,10,0,0,0,'75%','3,0',V3,22), R('CS2',250,10,4,0,0,'75%','3,0',V3,22), R('CS3',250,10,4,UL,0,'75%','3,0',V3,22),
-    R('I1',250,10,4,0,0,'75%','3,0',V3,22), R('I2',250,10,4,0,0,'70%','3,0',V3,22), R('I3',250,10,4,UL,0,'65%','3,0',V3,22)]},
-  ZPPH: {tabela:'04', nome:'ZPPH — Zona de Proteção ao Patrimônio Histórico', nota:'Imóveis inventariados ou tombados na ZPPH: pedidos de demolição, reforma e nova construção seguem para parecer do CONPHAAJ (art. 216).', linhas:[
-    R('R1',125,5,0,0,0,'80%','2,5',VG1,12), R('R2',250,10,0,0,0,'80%','2,0',VG2,12), R('R3',250,10,0,0,0,'80%','2,0',VG3,12),
-    R('CS1',250,10,0,0,0,'80%','2,5','0',12), R('CS2',250,10,0,0,0,'80%','2,5','0',12), R('CS3',250,10,0,0,0,'80%','2,5','0',12),
-    R('I1',250,10,0,0,0,'80%','2,5','0',12), R('I2',250,10,0,0,0,'80%','2,5','0',12), R('I3',250,10,0,0,0,'80%','2,5','0',12)]},
-  ZI:   {tabela:'05 e 06', nome:'ZI-01 e ZI-02 — Zona Industrial (tabelas idênticas)', linhas:[
-    R('R1',250,10,4,0,0,'75%','2,0',VG1,12), R('R2',250,10,4,0,0,'75%','2,0',VG2,'—'), R('R3',250,10,4,0,0,'75%','2,0',VG3,'—'),
-    R('CS1',250,10,4,0,0,'75%','3,0',V3,34), R('CS2',250,10,4,0,0,'75%','3,0',V4,34), R('CS3',500,10,4,UL,0,'75%','3,0',V4,34),
-    R('I1',250,10,4,0,0,'70%','3,0',V3,34), R('I2',250,10,4,UL,0,'75%','3,0',V4,34), R('I3',500,10,4,UL,0,'75%','3,0',V4,34)]}
-};
-const PARAMS_CCS = {tabela:'07', nome:'CCS — Corredor de Comércio e Serviços', linhas:[
-    R('R1',250,10,4,0,0,'80%','3,0',VG1,12), R('R2',250,10,4,0,0,'80%','2,0',VG2,34), R('R3',250,10,4,0,0,'80%','2,0',VG3,34),
-    R('CS1',250,10,4,0,0,'80%','3,0',V3,34), R('CS2',250,10,4,0,0,'80%','3,0',V3,34), R('CS3',250,10,4,0,0,'80%','3,0',V4,34),
-    R('I1',250,10,0,0,0,'80%','3,0',V3,34), R('I2',250,10,0,0,0,'80%','3,0',V3,34), R('I3',250,10,0,0,0,'80%','3,0',V4,34)]};
-const CATEGORIAS_TXT = '<b>R1</b> residência unifamiliar · <b>R2</b> multifamiliar (R2.01 horizontal, R2.02 vertical) · <b>R3</b> multifamiliar tipo studio · <b>CS1/CS2/CS3</b> comércio e serviços de pequeno (até 500 m²), médio (até 1.000 m²) e grande porte (acima de 1.000 m²) · <b>I1/I2/I3</b> indústrias de baixíssimo, baixo e moderado impacto ambiental.';
-function tabelaParams(par){
-  let h = '<table class="ptab"><thead><tr><th style="text-align:left">Cat.</th><th>Lote mín. (m²)</th><th>Frente (m)</th><th>Taxa de ocup.</th><th>Coef. aprov.</th><th>Gabarito (m)</th></tr></thead><tbody>';
-  par.linhas.forEach(l=>{
-    h += `<tr class="m"><td><b>${l.c}</b></td><td>${l.lote}</td><td>${l.fr}</td><td>${l.to}</td><td>${l.ca}</td><td>${l.gb}</td></tr>`+
-         `<tr class="s"><td colspan="6">Recuos (m): frontal ${l.rf} · lateral ${l.rl} · fundos ${l.rfu}<br>Vagas: ${l.vg} · Área permeável: 5% do lote</td></tr>`;
-  });
-  return h + '</tbody></table>';
-}
-function paramsHTML(p){
-  if(!p || p.tipo!=='Zona do Anexo III') return '';
-  const par = PARAMS[p.sigla];
-  if(!par) return `<div class="pnote"><b>Parâmetros urbanísticos:</b> o Anexo I da LC 409/2024 não traz tabela específica para a ${p.sigla}. Consulte a Secretaria de Planejamento Urbano.</div>`;
-  let h = `<details class="params"><summary>Parâmetros urbanísticos — Tabela ${par.tabela}</summary><div class="pnote" style="margin-top:6px"><b>${par.nome}</b></div>${tabelaParams(par)}`;
-  h += `<div class="pnote">${CATEGORIAS_TXT}</div>`;
-  if(par.nota) h += `<div class="pnote"><b>Atenção:</b> ${par.nota}</div>`;
-  h += `<div class="pnote">Transcrição do Anexo I da LC 409/2024. Confira no texto da lei; outras regras (Código de Obras, recuos específicos, estudos de impacto) podem se aplicar.</div></details>`;
-  h += `<details class="params"><summary>Se o lote tem frente para um CCS — Tabela ${PARAMS_CCS.tabela}</summary><div class="pnote" style="margin-top:6px"><b>${PARAMS_CCS.nome}</b> (camada “CCS” do mapa)</div>${tabelaParams(PARAMS_CCS)}<div class="pnote">Em logradouros que dividem duas zonas, valem as características da zona menos restritiva (art. 12).</div></details>`;
-  return h;
-}
-
-/* =========================================================
    MAPA
    ========================================================= */
 const map = L.map('map', {zoomControl:false, minZoom:8, maxZoom:19, zoomSnap:0.25, zoomDelta:0.5});
@@ -369,7 +308,7 @@ function resultHTML(r, compacto){
   }
   else if(p.tipo==='Zona do Anexo III'){ titulo = `${p.sigla} — ${p.nome}`; sub = p.perimetro ? `Perímetro ${p.perimetro}` : ''; }
   else { titulo = p.nome; }
-  let h = compacto ? `<div class="pz">${titulo}</div>` : `<div class="res-card"><div class="zone">${titulo}${sub?`<small>${sub}</small>`:''}</div>`;
+  let h = compacto ? `<div class="pz">${titulo}</div>` : `<div class="res-card"><button type="button" class="res-close" aria-label="Fechar consulta" title="Fechar">×</button><div class="zone">${titulo}${sub?`<small>${sub}</small>`:''}</div>`;
   if(compacto && sub) h += `<div>${sub}</div>`;
   if(eAia){
     h += `<div class="res-warn" style="background:#e9f5ee;border-color:#b7dcc4;color:#1b4d2e">🌿 <b>Prevalece a AIA.</b>${p.subjacente?` Esta área também consta como <b>${p.subjacente}</b>, mas a AIA se sobrepõe.`:''} Imóveis com AIA, no todo ou em parte, exigem Estudo de Impacto Ambiental (art. 215 da LC 409/2024).</div>`;
@@ -379,7 +318,7 @@ function resultHTML(r, compacto){
   h += `<div class="res-line"><b>Confiança:</b> <span class="badge ${r.conf}">${r.conf}</span><br><span style="color:var(--ink-soft)">${motivo}</span></div>`;
   if(r.aviso && !r.rebaixada) h += `<div class="res-warn">${r.aviso}</div>`;
   h += `<div class="res-line" style="color:var(--ink-soft)"><b>Fonte:</b> ${p.origem}</div>`;
-  if(!compacto){ if(!eAia) h += paramsHTML(p); h += `</div>`; }
+  if(!compacto) h += `</div>`;
   return h;
 }
 function mostrar(lat, lon, abrirPopup){
@@ -392,6 +331,13 @@ function mostrar(lat, lon, abrirPopup){
   if(abrirPopup) pinLayer.openPopup();
   return r;
 }
+function fecharConsulta(){
+  document.getElementById('result').innerHTML = '';
+  if(pinLayer){ map.removeLayer(pinLayer); pinLayer = null; }
+  map.closePopup();
+}
+document.getElementById('result').addEventListener('click', ev=>{ if(ev.target.closest('.res-close')) fecharConsulta(); });
+document.addEventListener('keydown', ev=>{ if(ev.key==='Escape') fecharConsulta(); });
 map.on('click', e => { mostrar(e.latlng.lat, e.latlng.lng, true); });
 
 document.getElementById('searchForm').addEventListener('submit', async ev=>{
@@ -503,7 +449,7 @@ function init(D){
   const fit = ()=>map.fitBounds(limiteBounds, {padding:[20,20]});
   document.getElementById('fitBtn').addEventListener('click', ()=>{ fit(); document.getElementById('sidebar').classList.remove('open'); });
   fit(); map.setMinZoom(Math.max(8, map.getZoom()-2));
-  window.__geoportal = {consultar, mostrar, CONS, map, leafletLayers};
+  window.__geoportal = {consultar, mostrar, fecharConsulta, CONS, map, leafletLayers};
 }
 
 Promise.all(Object.entries(FILES).map(([k,u])=>fetch(u).then(r=>{ if(!r.ok) throw new Error(u+' ('+r.status+')'); return r.json(); }).then(j=>[k,j])))
