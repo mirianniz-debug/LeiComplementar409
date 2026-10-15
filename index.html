@@ -110,6 +110,12 @@
   #statusbar .lbl{color:#9aa0d8;margin-right:5px;font-weight:600;letter-spacing:.06em;}
   #statusbar .sep{width:1px;height:12px;background:rgba(255,255,255,.25);}
   #loading{position:absolute;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;background:rgba(241,242,247,.92);font:600 14px var(--font-display);color:var(--navy);text-align:center;padding:20px;}
+  .lbl{display:none;pointer-events:none;}
+  .lbl span{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font:700 11px/1 var(--font-display);letter-spacing:.02em;color:#000032;
+    text-shadow:-1.5px 0 #fff,1.5px 0 #fff,0 -1.5px #fff,0 1.5px #fff,-1px -1px #fff,1px -1px #fff,-1px 1px #fff,1px 1px #fff;}
+  .lbl-aia span{color:#14532d;font-size:10px;font-weight:600;}
+  .lbl-ccs span{color:#000;font-size:10px;font-weight:600;}
+  .show-zona .lbl-zona,.show-aia .lbl-aia,.show-ccs .lbl-ccs{display:block;}
   .pin{width:18px;height:18px;border-radius:50%;background:var(--accent);border:3px solid #fff;box-shadow:0 0 0 3px rgba(209,72,49,.35),0 1px 6px rgba(0,0,0,.5);}
   .leaflet-popup-content{margin:11px 13px;font:400 12px/1.45 var(--font-body);min-width:210px;}
   .leaflet-popup-content .pz{font:700 13.5px/1.25 var(--font-display);color:var(--navy);margin:0 0 4px;}
@@ -214,7 +220,7 @@ const ZONAS = [
 ];
 const FILES = {
   consulta:'data/consulta.json', limite:'data/limite.json', ccs:'data/ccs.json',
-  hidro:'data/hidrografia.json', ferrovia:'data/ferrovia.json', faixa:'data/faixa_incerteza.json'
+  hidro:'data/hidrografia.json', ferrovia:'data/ferrovia.json', faixa:'data/faixa_incerteza.json', rotulos:'data/rotulos.json'
 };
 const LIMIAR_DIVISA_M = 30;
 
@@ -238,6 +244,8 @@ document.querySelectorAll('.basemap-btn').forEach(btn=>{
 map.createPane('pZonas').style.zIndex = 410;
 map.createPane('pAia').style.zIndex = 420;
 map.createPane('pLinhas').style.zIndex = 430;
+map.createPane('pRotulos').style.zIndex = 640;
+map.getPane('pRotulos').style.pointerEvents = 'none';
 map.createPane('pConsulta').style.zIndex = 650;
 const rZonas = L.svg({pane:'pZonas'}), rAia = L.svg({pane:'pAia'}), rLinhas = L.svg({pane:'pLinhas'});
 
@@ -245,6 +253,12 @@ map.on('mousemove', e=>{
   document.getElementById('roLat').textContent = e.latlng.lat.toFixed(5);
   document.getElementById('roLon').textContent = e.latlng.lng.toFixed(5);
 });
+/* rótulos dos perímetros: aparecem conforme o zoom (zonas de longe, AIA e CCS de mais perto) */
+function updRotulos(){
+  const z = map.getZoom(), c = map.getContainer().classList;
+  c.toggle('show-zona', z >= 13); c.toggle('show-aia', z >= 14.5); c.toggle('show-ccs', z >= 15);
+}
+map.on('zoomend', updRotulos);
 function updZoom(){ document.getElementById('roZoom').textContent = map.getZoom(); }
 map.on('zoomend', updZoom); updZoom();
 
@@ -439,6 +453,9 @@ function init(D){
     layer: L.geoJSON(D.ferrovia, {style:{color:'#5b0f0f', weight:2.4}, pane:'pLinhas', renderer:rLinhas, interactive:false})});
   renderRow(cb, {key:'hidro', name:'Hidrografia', color:'#3a86d6', line:true, on:false,
     layer: L.geoJSON(D.hidro, {style:{color:'#3a86d6', weight:1}, pane:'pLinhas', renderer:rLinhas, interactive:false})});
+  const rotLayer = L.geoJSON(D.rotulos, {pane:'pRotulos', interactive:false, pointToLayer:(f,ll)=>L.marker(ll,{pane:'pRotulos', interactive:false, keyboard:false,
+    icon:L.divIcon({className:'lbl lbl-'+f.properties.k, html:'<span>'+f.properties.t+'</span>', iconSize:[0,0]})})});
+  renderRow(cb, {key:'rotulos', name:'Rótulos dos perímetros (ZR-01, ZPR1-02, AIA-13, CCS-05…) — aparecem ao aproximar', color:'#000032', line:true, on:true, layer:rotLayer, after:updRotulos});
   renderRow(cb, {key:'faixa', name:'Faixa de incerteza (±30 m das divisas)', color:'#d14831', fill:'#d1483166', on:false,
     layer: L.geoJSON(D.faixa, {style:{stroke:false, fillColor:'#d14831', fillOpacity:0.38}, pane:'pAia', renderer:rAia, interactive:false})});
 
