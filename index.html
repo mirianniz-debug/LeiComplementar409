@@ -475,6 +475,28 @@ Promise.all(Object.entries(FILES).map(([k,u])=>fetch(u).then(r=>{ if(!r.ok) thro
 
 document.getElementById('toggleSidebar').addEventListener('click', ()=>document.getElementById('sidebar').classList.toggle('open'));
 </script>
+
+<!-- Celular: voltar ao mapa a partir do painel de camadas -->
+<style>
+  #sbBackdrop,#verMapaBtn{display:none;}
+  @media (max-width:900px){
+    body.sb-is-open #sbBackdrop{display:block;position:fixed;inset:0;z-index:850;background:rgba(10,20,40,.42);}
+    body.sb-is-open #verMapaBtn{display:flex;align-items:center;justify-content:center;gap:8px;position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:1200;border:0;border-radius:999px;padding:13px 24px;background:var(--header-bg,#16232e);color:#fff;font:700 15px var(--font-body,system-ui,sans-serif);box-shadow:0 4px 16px rgba(0,0,0,.4);cursor:pointer;}
+    #sidebar{padding-bottom:84px;}
+  }
+</style>
+<div id="sbBackdrop"></div>
+<button id="verMapaBtn" type="button">🗺 Ver o mapa</button>
+<script>
+(function(){
+  var sb = document.getElementById('sidebar'); if (!sb) return;
+  function sync(){ document.body.classList.toggle('sb-is-open', sb.classList.contains('open')); }
+  new MutationObserver(sync).observe(sb, {attributes:true, attributeFilter:['class']}); sync();
+  function fecha(){ sb.classList.remove('open'); }
+  document.getElementById('sbBackdrop').addEventListener('click', fecha);
+  document.getElementById('verMapaBtn').addEventListener('click', fecha);
+})();
+</script>
 </body>
 </html>
 
